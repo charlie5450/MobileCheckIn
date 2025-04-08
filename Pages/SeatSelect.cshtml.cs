@@ -11,6 +11,8 @@ namespace MobileCheckIn.Pages
         public string ReservationNumber { get; set; }
         public string FlightDateString { get; set; }
 
+        public DateTime ExpireTime { get; set; }
+
         // 선택된 좌석들을 비활성화할 목록
         public List<string> ReservedSeats { get; set; } = new List<string> { "12C", "16D", "25A" };
 
@@ -18,6 +20,8 @@ namespace MobileCheckIn.Pages
         {
             ReservationNumber = TempData.ContainsKey("ReservationNumber") ? TempData["ReservationNumber"]?.ToString() ?? "" : "";
             FlightDateString = TempData.ContainsKey("FlightDateString") ? TempData["FlightDateString"]?.ToString() ?? "" : "";
+
+            ViewData["ExpireTime"] = DateTime.UtcNow.AddMinutes(5);
 
             SelectedSeat = string.Empty;
 

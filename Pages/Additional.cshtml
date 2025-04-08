@@ -41,12 +41,12 @@
 
     <div class="form-group mt-3">
         <label asp-for="PassportNumber">여권번호</label>
-        <input asp-for="PassportNumber" class="form-control" />
+        <input asp-for="PassportNumber" class="form-control" required pattern="[A-Z0-9]{6,9}" title="영문+숫자 6~9자리" />
     </div>
 
     <div class="form-group mt-3">
         <label asp-for="PassportExpiry">여권 유효기한</label>
-        <input asp-for="PassportExpiry" type="date" class="form-control" />
+        <input asp-for="PassportExpiry" type="date" class="form-control" required min="@DateTime.Now.ToString("yyyy-MM-dd")" />
     </div>
 
     <button type="submit" class="btn btn-primary mt-4">다음</button>

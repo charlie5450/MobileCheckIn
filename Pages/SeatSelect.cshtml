@@ -2,19 +2,26 @@
 @model SeatsModel
 @{
     ViewData["Title"] = "좌석 선택";
+
+    var expireTime = ViewData["ExpireTime"] as DateTime?;
+    var expireTimeJs = expireTime.HasValue ? expireTime.Value.ToString("o") : "";
 }
 
-<h2>좌석 선택</h2>
-<p><strong>예약번호:</strong> @Model.ReservationNumber</p>
-<p><strong>탑승일:</strong> @Model.FlightDateString</p>
-
-<div id="seat-message" class="alert alert-info @(string.IsNullOrEmpty(Model.SelectedSeat) ? "d-none" : "")">
-    선택된 좌석: <strong id="selected-seat-text">@Model.SelectedSeat</strong>
+<div class="status-banner">
+    <div>
+        선택된 좌석: <strong id="selected-seat-text">@Model.SelectedSeat</strong>
+    </div>
+    <div>
+        남은 시간: <strong id="time-text">--:--</strong>
+    </div>
 </div>
 
-
-<form method="post">
+<form method="post" class="seat-form">
     <input type="hidden" name="SelectedSeat" id="SelectedSeat" value="@Model.SelectedSeat" />
+
+    @functions {
+        bool IsReserved(string seat) => Model.ReservedSeats.Contains(seat);
+    }
 
     <div class="seat-map">
         @for (int row = 1; row <= 32; row++)
@@ -35,14 +42,15 @@
                         @foreach (var seatLetter in new[] { "A", "B", "C" })
                         {
                             var seat = $"{row}{seatLetter}";
-                            bool isReserved = Model.ReservedSeats.Contains(seat);
-                            string btnClass = isReserved ? "btn-secondary"
+                            bool isReserved = IsReserved(seat);
+                            string btnClass = isReserved
+                            ? "btn-secondary"
                             : (Model.SelectedSeat == seat ? "btn-primary" : "btn-outline-primary");
                             string disabled = isReserved ? "disabled" : "";
 
                             <button type="button" class="btn @btnClass seat-btn"
                                     data-seat="@seat" @disabled>
-                                @seat
+                                @(isReserved ? "❌" : seat)
                             </button>
                         }
                     </div>
@@ -51,14 +59,15 @@
                         @foreach (var seatLetter in new[] { "D", "E", "F" })
                         {
                             var seat = $"{row}{seatLetter}";
-                            bool isReserved = Model.ReservedSeats.Contains(seat);
-                            string btnClass = isReserved ? "btn-secondary"
+                            bool isReserved = IsReserved(seat);
+                            string btnClass = isReserved
+                            ? "btn-secondary"
                             : (Model.SelectedSeat == seat ? "btn-primary" : "btn-outline-primary");
                             string disabled = isReserved ? "disabled" : "";
 
                             <button type="button" class="btn @btnClass seat-btn"
                                     data-seat="@seat" @disabled>
-                                @seat
+                                @(isReserved ? "❌" : seat)
                             </button>
                         }
                     </div>
@@ -69,15 +78,18 @@
         <div class="toilet-block">🚻 화장실</div>
     </div>
 
-    <button type="submit" class="btn btn-success mt-3">선택 완료</button>
+    <div class="footer-button">
+        <button type="submit" class="btn btn-success btn-block">선택 완료</button>
+    </div>
 </form>
 
 @section Scripts {
     <script>
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+
         document.addEventListener("DOMContentLoaded", function () {
             const seatButtons = document.querySelectorAll("button[data-seat]");
             const selectedSeatInput = document.getElementById("SelectedSeat");
-            const seatMessage = document.getElementById("seat-message");
             const seatText = document.getElementById("selected-seat-text");
 
             seatButtons.forEach(btn => {
@@ -98,21 +110,81 @@
                     const seat = btn.dataset.seat;
                     selectedSeatInput.value = seat;
 
-                    // 메시지 동적 업데이트
+                    // 상단 배너에 표시
                     seatText.textContent = seat;
-                    seatMessage.classList.remove("d-none");
                 });
             });
+
+            const expireTimeRaw = "@expireTimeJs";
+
+            if (expireTimeRaw) {
+                const expireTime = new Date(expireTimeRaw);
+
+                function updateRemainingTime() {
+                    const now = new Date();
+                    const diff = expireTime - now;
+
+                    if (diff <= 0) {
+                        document.getElementById("time-text").innerText = "만료되었습니다";
+                        window.location.href = "/"; // 메인으로 이동
+                        return;
+                    }
+
+                    const minutes = Math.floor(diff / 60000);
+                    const seconds = Math.floor((diff % 60000) / 1000);
+                    document.getElementById("time-text").innerText = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+                }
+
+                updateRemainingTime();
+                setInterval(updateRemainingTime, 1000);
+            } else {
+                document.getElementById("time-text").innerText = "시간 정보 없음";
+            }
         });
     </script>
 }
 
-
 <style>
+    html, body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+    }
+
+    #selected-seat-text {
+        background-color: #d1ecf1;
+        color: #0c5460;
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        font-weight: bold;
+        font-size: 1.2rem; /* 기존보다 살짝 키움 */
+    }
+
+    #time-text {
+        background-color: #fff3cd;
+        color: #856404;
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        font-weight: bold;
+        font-size: 1.2rem; /* 기존보다 살짝 키움 */
+    }
+
+    .status-banner {
+        position: sticky;
+        top: 0;
+        z-index: 999;
+        background-color: #f1f1f1;
+        border-bottom: 1px solid #ccc;
+        padding: 0.5rem 1rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 0.9rem;
+    }
+
     .seat-map {
-        max-height: 500px;
+        max-height: calc(100vh - 180px);
         overflow-y: auto;
-        border: 1px solid #ccc;
         padding: 1rem;
         background-color: #f8f9fa;
     }
@@ -145,5 +217,26 @@
     .seat-btn {
         width: 48px;
         height: 48px;
+        padding: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-weight: bold;
+    }
+
+
+    .footer-button {
+        padding: 1rem;
+        text-align: center;
+        border-top: 1px solid #ddd;
+        background-color: #fff;
+        position: sticky;
+        bottom: 0;
+        z-index: 998;
+    }
+
+    .btn-block {
+        width: 100%;
+        max-width: 300px;
     }
 </style>
