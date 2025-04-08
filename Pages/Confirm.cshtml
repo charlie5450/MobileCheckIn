@@ -1,0 +1,13 @@
+﻿@page
+@model MobileCheckIn.Pages.ConfirmModel
+@{
+    ViewData["Title"] = "체크인 완료";
+}
+
+<h2>체크인 완료</h2>
+
+<p><strong>예약번호:</strong> @Model.ReservationNumber</p>
+<p><strong>탑승일:</strong> @Model.FlightDateString</p>
+<p><strong>선택한 좌석:</strong> @Model.SelectedSeat</p>
+
+<a asp-page="/Index" class="btn btn-primary mt-3">처음으로</a>

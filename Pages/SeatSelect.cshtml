@@ -1,0 +1,65 @@
+﻿@page
+@model SeatsModel
+@{
+    ViewData["Title"] = "좌석 선택";
+}
+
+<h2 class="mb-4">좌석 선택</h2>
+
+<p><strong>예약번호:</strong> @Model.ReservationNumber</p>
+<p><strong>탑승일:</strong> @Model.FlightDateString</p>
+
+<form method="post">
+    <div id="seat-container" class="d-flex flex-column gap-2">
+        @foreach (var row in Enumerable.Range(1, 6))  // 행: 1 ~ 6
+        {
+            <div class="d-flex gap-2">
+                @foreach (var col in "ABCDEF")  // 열: A ~ F
+                {
+                    var seatId = $"{col}{row}";
+                    <button type="button"
+                            class="btn btn-outline-primary seat-btn"
+                            data-seat="@seatId">
+                        @seatId
+                    </button>
+                }
+            </div>
+        }
+    </div>
+
+    <input type="hidden" name="SelectedSeat" id="SelectedSeat" />
+
+    <div class="mt-4">
+        <button type="submit" class="btn btn-success">선택 완료</button>
+    </div>
+</form>
+
+@section Scripts {
+    <script>
+        const seatButtons = document.querySelectorAll(".seat-btn");
+        let selectedSeat = null;
+
+        seatButtons.forEach(btn => {
+            btn.addEventListener("click", () => {
+                // 이미 선택된 좌석이면 해제
+                if (btn.classList.contains("btn-success")) {
+                    btn.classList.remove("btn-success");
+                    btn.classList.add("btn-outline-primary");
+                    selectedSeat = null;
+                    document.getElementById("SelectedSeat").value = "";
+                } else {
+                    // 다른 버튼들 초기화
+                    seatButtons.forEach(b => {
+                        b.classList.remove("btn-success");
+                        b.classList.add("btn-outline-primary");
+                    });
+
+                    btn.classList.remove("btn-outline-primary");
+                    btn.classList.add("btn-success");
+                    selectedSeat = btn.dataset.seat;
+                    document.getElementById("SelectedSeat").value = selectedSeat;
+                }
+            });
+        });
+    </script>
+}
