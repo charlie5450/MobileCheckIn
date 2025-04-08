@@ -4,62 +4,146 @@
     ViewData["Title"] = "좌석 선택";
 }
 
-<h2 class="mb-4">좌석 선택</h2>
-
+<h2>좌석 선택</h2>
 <p><strong>예약번호:</strong> @Model.ReservationNumber</p>
 <p><strong>탑승일:</strong> @Model.FlightDateString</p>
 
+<div id="seat-message" class="alert alert-info @(string.IsNullOrEmpty(Model.SelectedSeat) ? "d-none" : "")">
+    선택된 좌석: <strong id="selected-seat-text">@Model.SelectedSeat</strong>
+</div>
+
+
 <form method="post">
-    <div id="seat-container" class="d-flex flex-column gap-2">
-        @foreach (var row in Enumerable.Range(1, 6))  // 행: 1 ~ 6
+    <input type="hidden" name="SelectedSeat" id="SelectedSeat" value="@Model.SelectedSeat" />
+
+    <div class="seat-map">
+        @for (int row = 1; row <= 32; row++)
         {
-            <div class="d-flex gap-2">
-                @foreach (var col in "ABCDEF")  // 열: A ~ F
-                {
-                    var seatId = $"{col}{row}";
-                    <button type="button"
-                            class="btn btn-outline-primary seat-btn"
-                            data-seat="@seatId">
-                        @seatId
-                    </button>
-                }
-            </div>
+            if (row == 14 || row == 15)
+            {
+                <div class="seat-row">
+                    <span class="text-danger">비상구</span>
+                </div>
+            }
+
+            if (row == 15) continue;
+
+            if (row <= 13 || row >= 16)
+            {
+                <div class="seat-row">
+                    <div class="seat-group">
+                        @foreach (var seatLetter in new[] { "A", "B", "C" })
+                        {
+                            var seat = $"{row}{seatLetter}";
+                            bool isReserved = Model.ReservedSeats.Contains(seat);
+                            string btnClass = isReserved ? "btn-secondary"
+                            : (Model.SelectedSeat == seat ? "btn-primary" : "btn-outline-primary");
+                            string disabled = isReserved ? "disabled" : "";
+
+                            <button type="button" class="btn @btnClass seat-btn"
+                                    data-seat="@seat" @disabled>
+                                @seat
+                            </button>
+                        }
+                    </div>
+                    <div class="aisle-space"></div>
+                    <div class="seat-group">
+                        @foreach (var seatLetter in new[] { "D", "E", "F" })
+                        {
+                            var seat = $"{row}{seatLetter}";
+                            bool isReserved = Model.ReservedSeats.Contains(seat);
+                            string btnClass = isReserved ? "btn-secondary"
+                            : (Model.SelectedSeat == seat ? "btn-primary" : "btn-outline-primary");
+                            string disabled = isReserved ? "disabled" : "";
+
+                            <button type="button" class="btn @btnClass seat-btn"
+                                    data-seat="@seat" @disabled>
+                                @seat
+                            </button>
+                        }
+                    </div>
+                </div>
+            }
         }
+
+        <div class="toilet-block">🚻 화장실</div>
     </div>
 
-    <input type="hidden" name="SelectedSeat" id="SelectedSeat" />
-
-    <div class="mt-4">
-        <button type="submit" class="btn btn-success">선택 완료</button>
-    </div>
+    <button type="submit" class="btn btn-success mt-3">선택 완료</button>
 </form>
 
 @section Scripts {
     <script>
-        const seatButtons = document.querySelectorAll(".seat-btn");
-        let selectedSeat = null;
+        document.addEventListener("DOMContentLoaded", function () {
+            const seatButtons = document.querySelectorAll("button[data-seat]");
+            const selectedSeatInput = document.getElementById("SelectedSeat");
+            const seatMessage = document.getElementById("seat-message");
+            const seatText = document.getElementById("selected-seat-text");
 
-        seatButtons.forEach(btn => {
-            btn.addEventListener("click", () => {
-                // 이미 선택된 좌석이면 해제
-                if (btn.classList.contains("btn-success")) {
-                    btn.classList.remove("btn-success");
-                    btn.classList.add("btn-outline-primary");
-                    selectedSeat = null;
-                    document.getElementById("SelectedSeat").value = "";
-                } else {
-                    // 다른 버튼들 초기화
+            seatButtons.forEach(btn => {
+                btn.addEventListener("click", () => {
+                    // 좌석 초기화
                     seatButtons.forEach(b => {
-                        b.classList.remove("btn-success");
-                        b.classList.add("btn-outline-primary");
+                        if (!b.disabled) {
+                            b.classList.remove("btn-primary");
+                            b.classList.add("btn-outline-primary");
+                        }
                     });
 
+                    // 선택된 버튼 강조
                     btn.classList.remove("btn-outline-primary");
-                    btn.classList.add("btn-success");
-                    selectedSeat = btn.dataset.seat;
-                    document.getElementById("SelectedSeat").value = selectedSeat;
-                }
+                    btn.classList.add("btn-primary");
+
+                    // hidden input 업데이트
+                    const seat = btn.dataset.seat;
+                    selectedSeatInput.value = seat;
+
+                    // 메시지 동적 업데이트
+                    seatText.textContent = seat;
+                    seatMessage.classList.remove("d-none");
+                });
             });
         });
     </script>
 }
+
+
+<style>
+    .seat-map {
+        max-height: 500px;
+        overflow-y: auto;
+        border: 1px solid #ccc;
+        padding: 1rem;
+        background-color: #f8f9fa;
+    }
+
+    .seat-row {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 8px;
+    }
+
+    .seat-group {
+        display: flex;
+        gap: 8px;
+    }
+
+    .aisle-space {
+        width: 40px;
+    }
+
+    .toilet-block {
+        width: 100%;
+        text-align: center;
+        font-size: 0.9rem;
+        padding: 6px;
+        background-color: #dee2e6;
+        border-radius: 6px;
+        margin-top: 1rem;
+    }
+
+    .seat-btn {
+        width: 48px;
+        height: 48px;
+    }
+</style>
