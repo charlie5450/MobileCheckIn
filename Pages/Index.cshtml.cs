@@ -24,14 +24,16 @@ namespace MobileCheckIn.Pages
         public IActionResult OnPost()
         {
             if (!ModelState.IsValid)
+            {
+                Console.WriteLine("모델 상태가 유효하지 않습니다.");
                 return Page();
-
-            // 로그로 확인
-            var flightDateStr = Visitor.FlightDate?.ToString("yyyy-MM-dd") ?? "";
-            Console.WriteLine("탑승일 저장 (TempData): " + flightDateStr);
+            }
+            
+            var flightDateStr = Visitor.FlightDate?.ToString("yyyy-MM-dd") ?? "";            
 
             TempData["ReservationNumber"] = Visitor.ReservationNumber ?? "";
             TempData["FlightDateString"] = flightDateStr;
+            TempData["FlightType"] = Visitor.FlightType ?? "";
 
             return RedirectToPage("SeatSelect");
         }

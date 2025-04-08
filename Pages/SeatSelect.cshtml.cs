@@ -18,10 +18,6 @@ namespace MobileCheckIn.Pages
             var reservation = TempData.ContainsKey("ReservationNumber") ? TempData["ReservationNumber"]?.ToString() : "";
             var flightDate = TempData.ContainsKey("FlightDateString") ? TempData["FlightDateString"]?.ToString() : "";
 
-            // 디버깅 출력
-            Console.WriteLine("TempData[ReservationNumber]: " + reservation);
-            Console.WriteLine("TempData[FlightDateString]: " + flightDate);
-
             ReservationNumber = reservation;
             FlightDateString = flightDate;
 
@@ -42,7 +38,11 @@ namespace MobileCheckIn.Pages
             // 여기도 TempData 계속 유지 (Confirm 페이지에서 또 써야 하니까)
             TempData.Keep();
 
-            return RedirectToPage("Confirm");
+            var flightType = TempData["FlightType"] as string ?? "";
+            if (flightType == "국제선")
+                return RedirectToPage("Additional"); //국제선이면 여권 페이지로
+            else
+                return RedirectToPage("Confirm"); //국내선이면 바로 Confirm
         }
     }
 
