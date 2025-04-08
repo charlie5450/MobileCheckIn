@@ -26,51 +26,59 @@
     <div class="seat-map">
         @for (int row = 1; row <= 32; row++)
         {
-            if (row == 14 || row == 15)
+            // 13열 위에 비상구 문구
+            if (row == 13)
             {
                 <div class="seat-row">
-                    <span class="text-danger">비상구</span>
+                    <span class="text-danger">비상구 좌석</span>
                 </div>
             }
 
-            if (row == 15) continue;
+            // 14, 15열은 스킵 (비상구 좌석 없음)
+            if (row == 14 || row == 15) continue;
 
-            if (row <= 13 || row >= 16)
+            // 실제 좌석 출력
+            <div class="seat-row">
+                <div class="seat-group">
+                    @foreach (var seatLetter in new[] { "A", "B", "C" })
+                    {
+                        var seat = $"{row}{seatLetter}";
+                        bool isReserved = IsReserved(seat);
+                        string btnClass = isReserved
+                        ? "btn-secondary"
+                        : (row == 13 || row == 16 ? "btn-warning" : "btn-outline-primary");
+                        string disabled = isReserved ? "disabled" : "";
+
+                        <button type="button" class="btn @btnClass seat-btn"
+                                data-seat="@seat" data-row="@row" @disabled>
+                            @(isReserved ? "❌" : seat)
+                        </button>
+                    }
+                </div>
+                <div class="aisle-space"></div>
+                <div class="seat-group">
+                    @foreach (var seatLetter in new[] { "D", "E", "F" })
+                    {
+                        var seat = $"{row}{seatLetter}";
+                        bool isReserved = IsReserved(seat);
+                        string btnClass = isReserved
+                        ? "btn-secondary"
+                        : (row == 13 || row == 16 ? "btn-warning" : "btn-outline-primary");
+                        string disabled = isReserved ? "disabled" : "";
+
+                        <button type="button" class="btn @btnClass seat-btn"
+                                data-seat="@seat" data-row="@row" @disabled>
+                            @(isReserved ? "❌" : seat)
+                        </button>
+                    }
+                </div>
+            </div>
+
+            // 16열 바로 아래에 비상구 문구 출력
+            if (row == 16)
             {
                 <div class="seat-row">
-                    <div class="seat-group">
-                        @foreach (var seatLetter in new[] { "A", "B", "C" })
-                        {
-                            var seat = $"{row}{seatLetter}";
-                            bool isReserved = IsReserved(seat);
-                            string btnClass = isReserved
-                            ? "btn-secondary"
-                            : (Model.SelectedSeat == seat ? "btn-primary" : "btn-outline-primary");
-                            string disabled = isReserved ? "disabled" : "";
-
-                            <button type="button" class="btn @btnClass seat-btn"
-                                    data-seat="@seat" @disabled>
-                                @(isReserved ? "❌" : seat)
-                            </button>
-                        }
-                    </div>
-                    <div class="aisle-space"></div>
-                    <div class="seat-group">
-                        @foreach (var seatLetter in new[] { "D", "E", "F" })
-                        {
-                            var seat = $"{row}{seatLetter}";
-                            bool isReserved = IsReserved(seat);
-                            string btnClass = isReserved
-                            ? "btn-secondary"
-                            : (Model.SelectedSeat == seat ? "btn-primary" : "btn-outline-primary");
-                            string disabled = isReserved ? "disabled" : "";
-
-                            <button type="button" class="btn @btnClass seat-btn"
-                                    data-seat="@seat" @disabled>
-                                @(isReserved ? "❌" : seat)
-                            </button>
-                        }
-                    </div>
+                    <span class="text-danger">비상구 좌석</span>
                 </div>
             }
         }
@@ -84,64 +92,91 @@
 </form>
 
 @section Scripts {
-    <script>
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+<script>
+    window.scrollTo({ top: 0, behavior: 'smooth' });
 
-        document.addEventListener("DOMContentLoaded", function () {
-            const seatButtons = document.querySelectorAll("button[data-seat]");
-            const selectedSeatInput = document.getElementById("SelectedSeat");
-            const seatText = document.getElementById("selected-seat-text");
+    document.addEventListener("DOMContentLoaded", function () {
+        const seatButtons = document.querySelectorAll("button[data-seat]");
+        const selectedSeatInput = document.getElementById("SelectedSeat");
+        const seatText = document.getElementById("selected-seat-text");
 
-            seatButtons.forEach(btn => {
-                btn.addEventListener("click", () => {
-                    // 좌석 초기화
-                    seatButtons.forEach(b => {
-                        if (!b.disabled) {
-                            b.classList.remove("btn-primary");
+        let selectedSeat = selectedSeatInput.value; // 선택된 좌석 기억
+
+        function updateSeatStyles() {
+            seatButtons.forEach(b => {
+                if (!b.disabled) {
+                    if (b.dataset.seat === selectedSeat) {
+                        b.classList.remove("btn-outline-primary", "btn-warning");
+                        b.classList.add("btn-primary");
+                    } else {
+                        b.classList.remove("btn-primary");
+                        if (b.dataset.row === "13" || b.dataset.row === "16") {
+                            b.classList.add("btn-warning");
+                        } else {
                             b.classList.add("btn-outline-primary");
                         }
-                    });
-
-                    // 선택된 버튼 강조
-                    btn.classList.remove("btn-outline-primary");
-                    btn.classList.add("btn-primary");
-
-                    // hidden input 업데이트
-                    const seat = btn.dataset.seat;
-                    selectedSeatInput.value = seat;
-
-                    // 상단 배너에 표시
-                    seatText.textContent = seat;
-                });
-            });
-
-            const expireTimeRaw = "@expireTimeJs";
-
-            if (expireTimeRaw) {
-                const expireTime = new Date(expireTimeRaw);
-
-                function updateRemainingTime() {
-                    const now = new Date();
-                    const diff = expireTime - now;
-
-                    if (diff <= 0) {
-                        document.getElementById("time-text").innerText = "만료되었습니다";
-                        window.location.href = "/"; // 메인으로 이동
-                        return;
                     }
+                }
+            });
+        }
 
-                    const minutes = Math.floor(diff / 60000);
-                    const seconds = Math.floor((diff % 60000) / 1000);
-                    document.getElementById("time-text").innerText = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        seatButtons.forEach(btn => {
+            btn.addEventListener("click", () => {
+                const seat = btn.dataset.seat;
+                const row = btn.dataset.row;
+
+                selectedSeat = seat;
+                selectedSeatInput.value = seat;
+                seatText.textContent = seat;
+
+                updateSeatStyles(); // 모든 버튼 스타일 새로 적용
+
+                // ⭐ 강제 리렌더
+                btn.offsetHeight;
+
+                if (row === "13" || row === "16") {
+                    alert("비상구 좌석은 비상시 승무원 지시에 따라 도와야 하며, 15세 이상이고 신체 건강한 승객만 선택 가능합니다.");
+
+                    // 다시 한 번 강조 (alert 이후 스타일이 풀릴 경우 대비)
+                    updateSeatStyles();
+                }
+            });
+        });
+
+        // 페이지 로드시 기본 스타일 적용
+        updateSeatStyles();
+
+        // 타이머 처리
+        const expireTimeRaw = "@expireTimeJs";
+
+        if (expireTimeRaw) {
+            const expireTime = new Date(expireTimeRaw);
+
+            function updateRemainingTime() {
+                const now = new Date();
+                const diff = expireTime - now;
+
+                if (diff <= 0) {
+                    document.getElementById("time-text").innerText = "만료되었습니다";
+                    window.location.href = "/"; // 메인으로 이동
+                    return;
                 }
 
-                updateRemainingTime();
-                setInterval(updateRemainingTime, 1000);
-            } else {
-                document.getElementById("time-text").innerText = "시간 정보 없음";
+                const minutes = Math.floor(diff / 60000);
+                const seconds = Math.floor((diff % 60000) / 1000);
+                document.getElementById("time-text").innerText = `${minutes}:${seconds.toString().padStart(2, '0')}`;
             }
-        });
-    </script>
+
+            updateRemainingTime();
+            setInterval(updateRemainingTime, 1000);
+        } else {
+            document.getElementById("time-text").innerText = "시간 정보 없음";
+        }
+    });
+</script>
+}
+
+
 }
 
 <style>
