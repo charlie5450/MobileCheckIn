@@ -34,14 +34,14 @@ namespace MobileCheckIn.Pages
 
             string reservationNo = Visitor.ReservationNumber ?? "";
             DateTime? flightDate = Visitor.FlightDate;
+            string flightType = Visitor.FlightType;
 
-            if (string.IsNullOrEmpty(reservationNo) || flightDate == null)
+            if (string.IsNullOrEmpty(reservationNo) || flightDate == null || string.IsNullOrEmpty(flightType))
             {
-                ModelState.AddModelError(string.Empty, "예약번호와 탑승일을 입력해주세요.");
+                ModelState.AddModelError(string.Empty, "예약번호, 탑승일, 항공편 유형을 모두 입력해주세요.");
                 return Page();
             }
 
-            // DB 조회
             string connectionString = _configuration.GetConnectionString("DefaultConnection");
             bool isInternational = false;
             bool found = false;
@@ -51,8 +51,8 @@ namespace MobileCheckIn.Pages
                 conn.Open();
 
                 string query = @"SELECT IsInternational 
-                                 FROM Reservations 
-                                 WHERE ReservationNo = @ReservationNo AND FlightDate = @FlightDate";
+                         FROM Reservations 
+                         WHERE ReservationNo = @ReservationNo AND FlightDate = @FlightDate";
 
                 using (SqlCommand cmd = new SqlCommand(query, conn))
                 {
@@ -64,6 +64,13 @@ namespace MobileCheckIn.Pages
                     {
                         isInternational = (bool)result;
                         found = true;
+
+                        // 사용자가 선택한 유형과 DB 정보 비교
+                        if ((isInternational && flightType != "국제선") || (!isInternational && flightType != "국내선"))
+                        {
+                            ModelState.AddModelError(string.Empty, "선택한 항공편 유형이 실제 예약 정보와 일치하지 않습니다.");
+                            return Page();
+                        }
                     }
                 }
             }
@@ -74,12 +81,12 @@ namespace MobileCheckIn.Pages
                 return Page();
             }
 
-            // TempData에 저장
             TempData["ReservationNumber"] = reservationNo;
             TempData["FlightDateString"] = flightDate?.ToString("yyyy-MM-dd");
             TempData["FlightType"] = isInternational ? "국제선" : "국내선";
 
             return RedirectToPage("SeatSelect");
         }
+
     }
 }

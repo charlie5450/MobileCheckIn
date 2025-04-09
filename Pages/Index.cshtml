@@ -6,6 +6,23 @@
 
 <h2>체크인</h2>
 
+@* 오류 메시지 표시 영역 *@
+@if (!ViewData.ModelState.IsValid)
+{
+    var errorMessage = ViewData.ModelState.Values
+        .SelectMany(v => v.Errors)
+        .Select(e => e.ErrorMessage)
+        .FirstOrDefault();
+
+    if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <strong>오류:</strong> @errorMessage
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+}
+
 <form method="post">
     <div class="form-group">
         <label asp-for="Visitor.ReservationNumber">예약번호 또는 항공권번호</label>
