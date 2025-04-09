@@ -38,7 +38,38 @@ namespace MobileCheckIn.Pages
         public void OnGet()
         {
             TempData.Keep(); // keep previous data
+
+            var reservationNo = TempData["ReservationNumber"]?.ToString();
+            if (string.IsNullOrEmpty(reservationNo))
+                return;
+
+            using (var conn = new SqlConnection(_configuration.GetConnectionString("DefaultConnection")))
+            {
+                conn.Open();
+                using (var cmd = new SqlCommand(@"
+            SELECT LastName, FirstName, Gender, DateOfBirth, Nationality, PassportNumber, PassportExpiry
+            FROM Reservations
+            WHERE ReservationNo = @ReservationNo", conn))
+                {
+                    cmd.Parameters.AddWithValue("@ReservationNo", reservationNo);
+
+                    using (var reader = cmd.ExecuteReader())
+                    {
+                        if (reader.Read())
+                        {
+                            LastName = reader["LastName"]?.ToString();
+                            FirstName = reader["FirstName"]?.ToString();
+                            Gender = reader["Gender"]?.ToString();
+                            DateOfBirth = reader["DateOfBirth"] as DateTime?;
+                            Nationality = reader["Nationality"]?.ToString();
+                            PassportNumber = reader["PassportNumber"]?.ToString();
+                            PassportExpiry = reader["PassportExpiry"] as DateTime?;
+                        }
+                    }
+                }
+            }
         }
+
 
         public IActionResult OnPost()
         {
