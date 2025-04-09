@@ -28,9 +28,32 @@ namespace MobileCheckIn.Pages
             FlightDateString = TempData["FlightDateString"]?.ToString() ?? "";
 
             ViewData["ExpireTime"] = DateTime.UtcNow.AddMinutes(5);
-            SelectedSeat = string.Empty;
             TempData.Keep();
+
+            // DB에서 기존 좌석번호 조회
+            using (var conn = new SqlConnection(_configuration.GetConnectionString("DefaultConnection")))
+            {
+                conn.Open();
+                using (var cmd = new SqlCommand("SELECT SeatNumber FROM Reservations WHERE ReservationNo = @resNo", conn))
+                {
+                    cmd.Parameters.AddWithValue("@resNo", ReservationNumber);
+
+                    var seat = cmd.ExecuteScalar();
+                    if (seat != null && seat != DBNull.Value)
+                    {
+                        SelectedSeat = seat.ToString();
+                    }
+                    else
+                    {
+                        SelectedSeat = string.Empty;
+                    }
+                }
+            }
+
+            // 예시: 이미 예약된 좌석 리스트 (추후 DB에서 불러오도록 확장 가능)
+            ReservedSeats = new List<string> { "12C", "16D", "25A" };
         }
+
 
         public IActionResult OnPost()
         {
