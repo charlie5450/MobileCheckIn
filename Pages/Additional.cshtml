@@ -1,9 +1,6 @@
 ﻿@page
 @model MobileCheckIn.Pages.AdditionalModel
 @{
-}
-
-@{
     ViewData["Title"] = "추가정보 입력";
 }
 
@@ -12,17 +9,17 @@
 <form method="post">
     <div class="form-group">
         <label asp-for="LastName">성</label>
-        <input asp-for="LastName" class="form-control" />
+        <input asp-for="LastName" class="form-control" required />
     </div>
 
     <div class="form-group mt-3">
         <label asp-for="FirstName">이름</label>
-        <input asp-for="FirstName" class="form-control" />
+        <input asp-for="FirstName" class="form-control" required />
     </div>
 
     <div class="form-group mt-3">
         <label asp-for="Gender">성별</label>
-        <select asp-for="Gender" class="form-control">
+        <select asp-for="Gender" class="form-control" required>
             <option value="">선택</option>
             <option value="M">남성</option>
             <option value="F">여성</option>
@@ -31,12 +28,12 @@
 
     <div class="form-group mt-3">
         <label asp-for="DateOfBirth">생년월일</label>
-        <input asp-for="DateOfBirth" type="date" class="form-control" />
+        <input asp-for="DateOfBirth" type="date" class="form-control" required />
     </div>
 
     <div class="form-group mt-3">
         <label asp-for="Nationality">국적</label>
-        <input asp-for="Nationality" class="form-control" placeholder="예: KOR" />
+        <input asp-for="Nationality" class="form-control" placeholder="예: KOR" required />
     </div>
 
     <div class="form-group mt-3">
@@ -51,4 +48,3 @@
 
     <button type="submit" class="btn btn-primary mt-4">다음</button>
 </form>
-
